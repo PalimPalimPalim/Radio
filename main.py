@@ -8,7 +8,6 @@ from functools import partial
 import coverpy
 
 
-
 # kivy imports
 from kivy.app import App
 from kivy.uix.image import Image, AsyncImage
