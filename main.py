@@ -7,7 +7,6 @@ from bs4 import BeautifulSoup
 from functools import partial
 import coverpy
 
-
 # kivy imports
 from kivy.app import App
 from kivy.uix.image import Image, AsyncImage
@@ -215,11 +214,17 @@ class TVButton(RadioButton):
     def __init__(self, name: str, image: str, **kwargs):
         self.text = self.get_date()
         super(TVButton, self).__init__(name, image, '', **kwargs)
+        Clock.schedule_once(self.check_videos_available)
+
 
     def get_date(self):
         files = [file for file in os.listdir("./videos") if self.name in file]
         dates = [file[0:8] for file in files]
-        return(max(dates))
+        return(max(dates) if dates else '')
+
+    def check_videos_available(self, *args):
+        if self.text == "":
+            self.parent.remove_widget(self)
 
     def play_channel(self):
         os.system("start ./videos/" + self.get_date() + self.name + ".mp4")
@@ -289,6 +294,8 @@ class RadioApp(App):
             media = self.vlc_inst.media_new(link)
             media.get_mrl()
             self.vlc_player.set_media(media)
+
+        print(link)
         
         self.vlc_player.play()
         
