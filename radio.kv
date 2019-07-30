@@ -1,0 +1,99 @@
+
+ScreenManager:
+    Screen:
+        name: "base"
+        BoxLayout:
+            orientation: "horizontal"
+            # -------left side -------
+            FloatLayout:
+                PlayPauseButton:
+                    id: playpausebutton
+                    canvas.before:
+                        Color:
+                            rgba: [1, 1, 1, 1]
+                        Line:
+                            width: 1.1
+                            ellipse: (self.x, self.y, self.width, self.height)
+                    pos_hint: {"center_x": 0.5, "center_y": 0.1}
+                    size_hint: (None, None)
+                    width: 90
+                    height: 90
+                    on_press: self.toggle()
+                    on_enter: self._hover_add_background()
+                    on_leave: self._hover_remove_background()
+                Image:
+                    id: playing_channel_img
+                    pos_hint: {"center_x": 0.5, "center_y": 0.9}
+                    size_hint: (1/4, None)
+                    height: self.width
+                    source: "./ButtonImages/black.png"
+                    canvas.after:
+                        Color:
+                            rgba: [1, 1, 1, 1]
+                        Line:
+                            width: 1
+                            rectangle: self.x, self.y, self.width, self.height
+                
+                CoverImage:
+                    pos_hint: {"center_x": 0.5, "center_y": 0.55}
+                    size_hint: (0.75, None)
+                    height: self.width
+                    cover_info: app.meta_info
+                    on_cover_info: self.update_cover()
+                    source: "./ButtonImages/black.png"
+                    allow_stretch: True
+                    canvas.after:
+                        Color:
+                            rgba: [1, 1, 1, 1]
+                        Line:
+                            width: 1
+                            rectangle: self.x, self.y, self.width, self.height
+
+
+                Label:
+                    text: app.station
+                    pos_hint: {"center_x": 0.5, "center_y": 0.25}
+                    width: self.parent.width
+                Label:
+                    text: app.meta_info
+                    pos_hint: {"center_x": 0.5, "center_y": 0.225}
+                    size_hint_y: None
+                    halign: "center"
+                    text_size: self.width, None
+                    height: self.texture_size[1]
+
+
+            # -------right side ------
+            TabbedPanel
+                do_default_tab: False
+
+                TabbedPanelItem:
+                    text: 'Radio'
+                    ScrollView:
+                        RadioGrid:
+
+                TabbedPanelItem:
+                    text: "Nachrichten"
+                    ScrollView:
+                        do_scroll_y: True
+                        ScrollView:
+                            height: self.parent.height + 0.01
+                            NewsGrid:
+                        
+                 
+
+<ChannelGrid>:
+    size_hint_y: None
+    height: self.minimum_height
+    cols: 3
+    spacing: [5, 5]
+
+
+<RadioButton>:
+    size_hint: (1, None)
+    height: self.width
+    background_normal: './ButtonImages/' + self.image
+    on_press: self.background_normal = '' 
+    on_press: self.play_channel(); app.root.ids.playing_channel_img.source = './ButtonImages/' + self.image
+    on_release:  self.background_normal = './ButtonImages/' + self.image
+
