@@ -107,7 +107,7 @@ class PlayPauseButton(ButtonBehavior, Widget, HoverBehavior):
 
     def __init__(self, **kwargs):
         super(PlayPauseButton, self).__init__(**kwargs)
-        Clock.schedule_once(self._add_play_sign, 1)
+        Clock.schedule_once(self._add_play_sign, 2)
         Clock.schedule_interval(self.check_status, 0.3)
 
     def collide_point(self, x, y):
