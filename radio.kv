@@ -79,8 +79,40 @@ ScreenManager:
                         ScrollView:
                             height: self.parent.height + 0.01
                             NewsGrid:
-                        
-                 
+        
+        RelativeLayout:
+            CloseMinimzeGrid:
+                pos_hint: {'right': 1, 'top': 1}
+                text: 'bottom right'
+                size_hint: None, None
+                size: 100, 30
+                cols: 2
+                on_leave: self.children_remove()
+                on_enter: self.children_add()
+
+<MinimizeButton>:
+    canvas.before:
+        Color:
+            rgba: 0.15, 0.15, 0.15, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    text: "-"
+    size_hint_y: None
+    on_press: self.minimize_app()
+
+<CloseButton>:
+    canvas.before:
+        Color:
+            rgba: 1, 0, 0, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    text: "x"
+    size_hint_y: None
+    background_color: 1, 0, 0, 1
+    on_press: self.close_app()
+
 
 <ChannelGrid>:
     size_hint_y: None

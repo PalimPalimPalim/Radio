@@ -8,6 +8,9 @@ from functools import partial
 import coverpy
 
 # kivy imports
+from kivy.config import Config
+# Config.set('graphics', 'fullscreen', 'fake')
+Config.set('graphics', 'resizable', 0)
 from kivy.app import App
 from kivy.uix.image import Image, AsyncImage
 from kivy.uix.widget import Widget
@@ -278,6 +281,23 @@ class NewsGrid(ChannelGrid):
             return("Economist_Radio.png")
         
 
+class CloseMinimzeGrid(GridLayout, HoverBehavior):
+    def children_add(self):
+        self.add_widget(MinimizeButton(height=self.height))
+        self.add_widget(CloseButton(height=self.height))
+
+    def children_remove(self):
+        self.clear_widgets()
+
+class CloseButton(ButtonBehavior, Label, HoverBehavior):
+    def close_app(self):
+        App.get_running_app().stop()
+
+class MinimizeButton(ButtonBehavior, Label, HoverBehavior):
+    def minimize_app(self):
+        App.get_running_app().root_window.minimize()
+
+
 class RadioApp(App):
     station = StringProperty()
     meta_info = StringProperty()
@@ -312,6 +332,10 @@ class RadioApp(App):
 
     def toggle(self):
         self.vlc_player.pause()
+
+
+    def build(self):
+        Window.borderless = True
 
 if __name__ == "__main__":
     RadioApp().run()
