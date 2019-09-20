@@ -86,7 +86,7 @@ class CoverImage(AsyncImage):
                 self.source = result.artwork(300)
                 self.cover_info_prev = self.cover_info
             except:
-                pass
+                self.source = './ButtonImages/' + App.get_running_app().playing_image
 
 
 
@@ -196,9 +196,14 @@ class RadioButton(Button):
         super(RadioButton, self).__init__(**kwargs)
 
     def play_channel(self):
-        App.get_running_app().play(self.link)
+        App.get_running_app().play(self.link, image=self.image, name=self.name)
 
 class DFNews(RadioButton):
+
+    def __init__(self, **kwargs):
+        super(DFNews, self).__init__(**kwargs)
+        self.get_link()
+
     def play_channel(self):
         App.get_running_app().play(self.get_link())
 
@@ -241,8 +246,6 @@ class NewsGrid(ChannelGrid):
         super(NewsGrid, self).__init__(**kwargs)
         # DF Nachrichten
         self.add_widget(DFNews(name='DF Nachrichten', image='deutschlandfunknachrichten.png', link=''))
-        # tagesthemen
-        self.add_widget(TVButton(name="tagesthemen", image="tagesthemen.png"))
         # Economist
         self.economist_search_links()
 
@@ -280,6 +283,18 @@ class NewsGrid(ChannelGrid):
         else:
             return("Economist_Radio.png")
         
+class VideoGrid(ChannelGrid):
+    def __init__(self, **kwargs):
+        super(VideoGrid, self).__init__(**kwargs)
+        Clock.schedule_once(self.add_tagesthemen, 2)
+
+    def add_tagesthemen(self, *args):
+        self.add_widget(TVButton(name="tagesthemen", 
+                                 image="tagesthemen.png",
+                                 size_hint=(None, None),
+                                 width=(Window.width - 2 * 5) / 6,
+                                 height=(Window.width - 2 * 5) / 6)) # spacing inside channel grid is 5
+
 
 class CloseMinimzeGrid(GridLayout, HoverBehavior):
     def children_add(self):
@@ -301,6 +316,9 @@ class MinimizeButton(ButtonBehavior, Label, HoverBehavior):
 class RadioApp(App):
     station = StringProperty()
     meta_info = StringProperty()
+    playing_name = StringProperty()
+    playing_image = StringProperty()
+
 
     def __init__(self, **kwargs):
         super(RadioApp, self).__init__(**kwargs)
@@ -308,13 +326,16 @@ class RadioApp(App):
         self.vlc_inst = vlc.Instance()
         self.vlc_player = self.vlc_inst.media_player_new()
         
-    def play(self, link=''):
+    def play(self, link='', **kwargs):
         if link:
             # play
             media = self.vlc_inst.media_new(link)
             media.get_mrl()
             self.vlc_player.set_media(media)
 
+        self.playing_name = kwargs.get('name', '')
+        self.playing_image = kwargs.get('image', '')
+        
         print(link)
         
         self.vlc_player.play()
