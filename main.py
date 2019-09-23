@@ -188,11 +188,13 @@ class RadioButton(Button):
     name = StringProperty()
     image = StringProperty()
     link = StringProperty()
+    description = StringProperty()
 
     def __init__(self, name: str, image: str, link: str, **kwargs):
         self.name = name
         self.image = image
         self.link = link
+        self.description = kwargs.get('description','')
         super(RadioButton, self).__init__(**kwargs)
 
     def play_channel(self):
@@ -263,10 +265,11 @@ class NewsGrid(ChannelGrid):
     def economist_found_streams(self, request, html):
         soup = BeautifulSoup(html, "html.parser")
         link = soup.find_all("a", {"class": "btn btn-ios download-btn"}, href=True)[0].get('href')
-
+        description = soup.find_all("p", {"class": "pod-name"})[0].get_text()
         self.add_widget(RadioButton('economist',
                                     self.economist_match_image(link), 
-                                    link))
+                                    link,
+                                    description=description))
         
     @staticmethod
     def economist_match_image(link):
@@ -318,6 +321,7 @@ class RadioApp(App):
     meta_info = StringProperty()
     playing_name = StringProperty()
     playing_image = StringProperty()
+    playing_description = StringProperty()
 
 
     def __init__(self, **kwargs):
@@ -348,6 +352,9 @@ class RadioApp(App):
 
         self.station = info[0] if info[0] else ''
         self.meta_info = info[12] if info[12] else ''
+
+        if self.station.strip() == 'media.mp3':
+            self.station = self.playing_description
 
         return(info)
 

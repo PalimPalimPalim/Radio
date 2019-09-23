@@ -18,8 +18,7 @@ def get_download_link():
 
     begin_date = link.find("TV-20") + len("TV-")
     date = link[begin_date:(begin_date+8)]
-
-    
+        
     return({"link" : link, "date": date})
 
 
@@ -28,10 +27,6 @@ def download_mp4(link, date):
 
     with open('./videos/' + date + 'tagesthemen.mp4', 'wb') as f:  
         f.write(r.content)    
-
-# r = requests.get("http://download.media.tagesschau.de/video/2019/0504/TV-20190504-2346-2601.webl.h264.mp4")
-# with open('./temp.mp4', 'wb') as f:  
-#     f.write(r.content)
 
 if __name__ =="__main__":
     info = get_download_link()

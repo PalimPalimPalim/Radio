@@ -139,6 +139,7 @@ ScreenManager:
         self.play_channel()
         app.root.ids.playing_channel_img.source = './ButtonImages/' + self.image
         app.root.ids.cover_image.source = './ButtonImages/' + self.image
+        app.playing_description = self.description
     on_release:  self.background_normal = './ButtonImages/' + self.image
 
 <TabbedPanelHeader>
