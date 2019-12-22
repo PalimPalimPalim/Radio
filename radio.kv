@@ -80,6 +80,9 @@ ScreenManager:
                         ScrollView:
                             height: self.parent.height + 0.01
                             NewsGrid:
+                                PodcastBttn:
+                                    url: "https://www.podbean.com/podcast-detail/54iea-2f1da/The-Intelligence-Podcast"
+                                    on_press: self.open_popup()
                 TabbedPanelItem:
                     text: "Videos"
                     ScrollView:
@@ -88,39 +91,6 @@ ScreenManager:
                             height: self.parent.height + 0.01
                             VideoGrid:
 
-        
-        RelativeLayout:
-            CloseMinimzeGrid:
-                pos_hint: {'right': 1, 'top': 1}
-                text: 'bottom right'
-                size_hint: None, None
-                size: 100, 30
-                cols: 2
-                on_leave: self.children_remove()
-                on_enter: self.children_add()
-
-<MinimizeButton>:
-    canvas.before:
-        Color:
-            rgba: 0.15, 0.15, 0.15, 1
-        Rectangle:
-            pos: self.pos
-            size: self.size
-    text: "-"
-    size_hint_y: None
-    on_press: self.minimize_app()
-
-<CloseButton>:
-    canvas.before:
-        Color:
-            rgba: 1, 0, 0, 1
-        Rectangle:
-            pos: self.pos
-            size: self.size
-    text: "x"
-    size_hint_y: None
-    background_color: 1, 0, 0, 1
-    on_press: self.close_app()
 
 
 <ChannelGrid>:
@@ -150,3 +120,26 @@ ScreenManager:
             points: [self.pos[0] + 2, self.pos[1],self.pos[0] + 2, self.pos[1]+ self.height - 2,self.pos[0] + self.width - 2, self.pos[1]+ self.height - 2, self.pos[0] + self.width - 2, self.pos[1]]
             width: 1
     background_color: 1,1,1,1
+
+<ScrollGridLayout>:
+    size_hint_y: None
+    height: self.minimum_height
+
+# <PodcastPopupRowLabel>:
+#     orientation: "vertical"
+#     height: 40 
+#     Button:
+#         size_hint_y: None
+#         height: (root.height - lbl.height) / 2
+#         on_press: print(self.height)
+#     Label:
+#         id: lbl
+#         # text_size: self.width, None #self.texture_size[1]
+#         # size_hint_y: None
+#         text: root.text
+#         size_hint_y: None
+#         text_size: self.width, None
+#         height: self.texture_size[1]
+#     Widget:
+#         size_hint_y: None
+#         height: (root.height - lbl.height) / 2

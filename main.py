@@ -17,8 +17,12 @@ from kivy.uix.widget import Widget
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.button import Button
 from kivy.uix.label import Label
+from kivy.uix.popup import Popup
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.scrollview import ScrollView
+from kivy.uix.widget import Widget
 from kivy.uix.behaviors.button import ButtonBehavior
-from kivy.properties import StringProperty, BooleanProperty, ObjectProperty
+from kivy.properties import StringProperty, BooleanProperty, ObjectProperty, ListProperty
 from kivy.network.urlrequest import UrlRequest
 from kivy.clock import Clock
 from kivy.vector import Vector
@@ -286,7 +290,86 @@ class NewsGrid(ChannelGrid):
             return("Economist_Babbage.jpeg")
         else:
             return("Economist_Radio.png")
+
+class PodcastBttn(Button):
+    streaming_links = ListProperty()
+    descriptions = ListProperty()
+    url = StringProperty()
+    img = StringProperty()
+    name = StringProperty()
+
+    def __init__(self, **kwargs):
+        super(PodcastBttn, self).__init__(**kwargs)
+        self.url = "https://www.podbean.com/podcast-detail/54iea-2f1da/The-Intelligence-Podcast"
+        self.name = "The-Intelligence-Podcast"
+        self.img = 'deutschlandfunknachrichten.png'
+        self.podcast_search_links()
+
+    def podcast_search_links(self):
+        UrlRequest(self.url, self.economist_found_links) # using kivys async requests
+    
+    def economist_found_links(self, request, html):
+        soup = BeautifulSoup(html, "html.parser")
+        download_buttons = soup.find_all("a", {"class": "download"}, href=True)
+        for button_link in download_buttons:
+             UrlRequest(button_link.get('href'), self.economist_found_streams) # using kivys async requests
+
+    def economist_found_streams(self, request, html):
+        soup = BeautifulSoup(html, "html.parser")
+
+        link = soup.find_all("a", {"class": "btn btn-ios download-btn"}, href=True)[0].get('href')
+        self.streaming_links.append(link)
+
+        description = soup.find_all("p", {"class": "pod-name"})[0].get_text()
+        self.descriptions.append(description)
+
+    def open_popup(self):
+        popup = PodcastPopup(self.streaming_links, self.descriptions, self.img, self.name)
+        popup.open()
+
+class PodcastPopup(Popup):
+    
+    def __init__(self, streaming_links, descriptions, img, name, **kwargs):
+        super(PodcastPopup, self).__init__(**kwargs)
+
+        self.size_hint=(None, None)
+        self.size=(Window.width * 0.8, Window.height * 0.8)
+        self.title = name
+
+        grid = ScrollGridLayout()
+        scrollview = ScrollView()
+        scrollview.add_widget(grid)
+        self.content = scrollview
         
+        for (streaming_link, description) in zip(streaming_links, descriptions):
+            row = PodcastPopupRow(streaming_link, description, img, name)
+            grid.add_widget(row)
+
+class PodcastPopupRow(GridLayout):
+    def __init__(self, link, description, img, name, **kwargs):
+        super(PodcastPopupRow, self).__init__(**kwargs)
+        #self.orientation = "horizontal"
+        self.rows = 1
+        self.size_hint_y = None
+        self.height = 40
+        self.add_widget(RadioButton(name, img, link, size_hint=(None, None), height=self.height, width=39))
+        self.add_widget(PodcastPopupRowLabel(text = description, height = self.height, valign="middle", halign="left"))
+
+class PodcastPopupRowLabel(Label):
+    text = StringProperty()
+    def __init__(self, text, **kwargs):
+        super(PodcastPopupRowLabel, self).__init__(**kwargs)
+        self.text = text
+
+class ScrollGridLayout(GridLayout):
+    def __init__(self, **kwargs):
+        super(ScrollGridLayout, self).__init__(**kwargs)
+        #self.size_hint_y=None
+        #self.height=self.minimum_height
+        self.row_default_height=40
+        self.cols=1
+        self.spacing = [5, 5]
+
 class VideoGrid(ChannelGrid):
     def __init__(self, **kwargs):
         super(VideoGrid, self).__init__(**kwargs)
@@ -307,14 +390,6 @@ class CloseMinimzeGrid(GridLayout, HoverBehavior):
 
     def children_remove(self):
         self.clear_widgets()
-
-class CloseButton(ButtonBehavior, Label, HoverBehavior):
-    def close_app(self):
-        App.get_running_app().stop()
-
-class MinimizeButton(ButtonBehavior, Label, HoverBehavior):
-    def minimize_app(self):
-        App.get_running_app().root_window.minimize()
 
 
 class RadioApp(App):
@@ -364,7 +439,7 @@ class RadioApp(App):
 
 
     def build(self):
-        Window.borderless = True
+        Window.borderless = False
 
 if __name__ == "__main__":
     RadioApp().run()
