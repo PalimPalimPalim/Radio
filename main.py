@@ -253,6 +253,7 @@ class NewsGrid(ChannelGrid):
 
     
     def economist_search_links(self):
+        # https://www.podbean.com/podcast-detail/vpig6-23f2d/Forschung-Aktuell---Deutschlandfunk-Podcast
         url = "https://www.podbean.com/podcast-detail/jdhgv-2ef60/Economist-Radio-Podcast"
         UrlRequest(url, self.economist_found_links) # using kivys async requests
     
