@@ -82,7 +82,10 @@ ScreenManager:
                             NewsGrid:
                                 PodcastBttn:
                                     url: "https://www.podbean.com/podcast-detail/54iea-2f1da/The-Intelligence-Podcast"
-                                    on_press: self.open_popup()
+                                    name: "The-Intelligence-Podcast"
+                                    img: "Economist_The_Intelligence.jpeg"
+                                    
+
                 TabbedPanelItem:
                     text: "Videos"
                     ScrollView:
@@ -91,6 +94,11 @@ ScreenManager:
                             height: self.parent.height + 0.01
                             VideoGrid:
 
+<PodcastBttn>:
+    background_normal: './ButtonImages/' + self.img
+    on_press: self.open_popup()
+    on_press: self.background_normal = '' 
+    on_release:  self.background_normal = './ButtonImages/' + self.img
 
 
 <ChannelGrid>:
@@ -107,9 +115,6 @@ ScreenManager:
     on_press: self.background_normal = '' 
     on_press: 
         self.play_channel()
-        app.root.ids.playing_channel_img.source = './ButtonImages/' + self.image
-        app.root.ids.cover_image.source = './ButtonImages/' + self.image
-        app.playing_description = self.description
     on_release:  self.background_normal = './ButtonImages/' + self.image
 
 <TabbedPanelHeader>
@@ -125,21 +130,29 @@ ScreenManager:
     size_hint_y: None
     height: self.minimum_height
 
-# <PodcastPopupRowLabel>:
-#     orientation: "vertical"
-#     height: 40 
-#     Button:
-#         size_hint_y: None
-#         height: (root.height - lbl.height) / 2
-#         on_press: print(self.height)
-#     Label:
-#         id: lbl
-#         # text_size: self.width, None #self.texture_size[1]
-#         # size_hint_y: None
-#         text: root.text
-#         size_hint_y: None
-#         text_size: self.width, None
-#         height: self.texture_size[1]
-#     Widget:
-#         size_hint_y: None
-#         height: (root.height - lbl.height) / 2
+<PodcastPopupRow>:
+    orientation: "horizontal"
+    rows: 1
+    size_hint_y: None
+    height: 100
+    spacing: 5
+    on_press: print("button pressed")
+    on_press: self.play_channel()
+
+    canvas.before:
+        Color:
+            rgba: [1, 1, 1, 1]
+        Line:
+            width: 1
+            rectangle: self.x, self.y, self.width, self.height
+
+    Image:
+        source: './ButtonImages/' + root.image
+        size_hint: (None, None)
+        width: root.height
+        height: root.height
+    Label:
+        text: root.description
+        text_size: self.width, None
+        halign: 'left'
+        valign: 'middle'

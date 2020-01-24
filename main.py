@@ -93,7 +93,6 @@ class CoverImage(AsyncImage):
                 self.source = './ButtonImages/' + App.get_running_app().playing_image
 
 
-
 class InfoLabel(Label):
     station = StringProperty()
     meta_info = StringProperty()
@@ -168,8 +167,6 @@ class PlayPauseButton(ButtonBehavior, Widget, HoverBehavior):
 
     def _hover_remove_background(self):
         self.canvas.before.remove(self.background)
-
-
 
 
 class ChannelGrid(GridLayout):
@@ -300,9 +297,9 @@ class PodcastBttn(Button):
 
     def __init__(self, **kwargs):
         super(PodcastBttn, self).__init__(**kwargs)
-        self.url = "https://www.podbean.com/podcast-detail/54iea-2f1da/The-Intelligence-Podcast"
-        self.name = "The-Intelligence-Podcast"
-        self.img = 'deutschlandfunknachrichten.png'
+        # self.url = "https://www.podbean.com/podcast-detail/54iea-2f1da/The-Intelligence-Podcast"
+        # self.name = "The-Intelligence-Podcast"
+        # self.img = 'deutschlandfunknachrichten.png'
         self.podcast_search_links()
 
     def podcast_search_links(self):
@@ -327,48 +324,46 @@ class PodcastBttn(Button):
         popup = PodcastPopup(self.streaming_links, self.descriptions, self.img, self.name)
         popup.open()
 
+class ScrollGridLayout(GridLayout):
+    pass
+
 class PodcastPopup(Popup):
     
     def __init__(self, streaming_links, descriptions, img, name, **kwargs):
         super(PodcastPopup, self).__init__(**kwargs)
 
         self.size_hint=(None, None)
-        self.size=(Window.width * 0.8, Window.height * 0.8)
+        self.size=(Window.width * 0.5, Window.height * 0.4)
         self.title = name
 
-        grid = ScrollGridLayout()
-        scrollview = ScrollView()
-        scrollview.add_widget(grid)
-        self.content = scrollview
-        
+        grid = ScrollGridLayout(row_default_height=40, cols=1, spacing=[5, 5])
         for (streaming_link, description) in zip(streaming_links, descriptions):
             row = PodcastPopupRow(streaming_link, description, img, name)
             grid.add_widget(row)
+        
+        scrollview = ScrollView(do_scroll_y=True)
+        scrollview.add_widget(grid)
+        self.content = scrollview
 
-class PodcastPopupRow(GridLayout):
-    def __init__(self, link, description, img, name, **kwargs):
+class PodcastPopupRow(ButtonBehavior, GridLayout):
+    link = StringProperty()
+    image = StringProperty()
+    description = StringProperty()
+    name = StringProperty()
+
+    def __init__(self, link, description, image, name, **kwargs):
+        self.link = link
+        self.description = description
+        self.image = image
+        self.name = name
         super(PodcastPopupRow, self).__init__(**kwargs)
-        #self.orientation = "horizontal"
-        self.rows = 1
-        self.size_hint_y = None
-        self.height = 40
-        self.add_widget(RadioButton(name, img, link, size_hint=(None, None), height=self.height, width=39))
-        self.add_widget(PodcastPopupRowLabel(text = description, height = self.height, valign="middle", halign="left"))
+    
+    def play_channel(self):
+        # dismiss Popup
+        self.parent.parent.parent.parent.parent.dismiss()
+        App.get_running_app().play(self.link, image=self.image, name=self.name, description=self.description)
 
-class PodcastPopupRowLabel(Label):
-    text = StringProperty()
-    def __init__(self, text, **kwargs):
-        super(PodcastPopupRowLabel, self).__init__(**kwargs)
-        self.text = text
 
-class ScrollGridLayout(GridLayout):
-    def __init__(self, **kwargs):
-        super(ScrollGridLayout, self).__init__(**kwargs)
-        #self.size_hint_y=None
-        #self.height=self.minimum_height
-        self.row_default_height=40
-        self.cols=1
-        self.spacing = [5, 5]
 
 class VideoGrid(ChannelGrid):
     def __init__(self, **kwargs):
@@ -407,6 +402,10 @@ class RadioApp(App):
         self.vlc_player = self.vlc_inst.media_player_new()
         
     def play(self, link='', **kwargs):
+        
+        print(link)
+        print(kwargs)
+        
         if link:
             # play
             media = self.vlc_inst.media_new(link)
@@ -415,8 +414,11 @@ class RadioApp(App):
 
         self.playing_name = kwargs.get('name', '')
         self.playing_image = kwargs.get('image', '')
-        
-        print(link)
+        self.playing_description = kwargs.get('description', '')
+
+        self.root.ids.playing_channel_img.source = './ButtonImages/' + self.playing_image
+        self.root.ids.cover_image.source = './ButtonImages/' + self.playing_image
+
         
         self.vlc_player.play()
         
@@ -426,11 +428,13 @@ class RadioApp(App):
         media = self.vlc_player.get_media()
         info = [media.get_meta(i) for i in range(30)]
 
+
         self.station = info[0] if info[0] else ''
         self.meta_info = info[12] if info[12] else ''
 
         if self.station.strip() == 'media.mp3':
-            self.station = self.playing_description
+            self.station = self.playing_name
+            self.meta_info = self.playing_description
 
         return(info)
 
