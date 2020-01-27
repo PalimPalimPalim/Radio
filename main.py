@@ -202,13 +202,17 @@ class RadioButton(Button):
         App.get_running_app().play(self.link, image=self.image, name=self.name)
 
 class DFNews(RadioButton):
+    name = StringProperty('DF Nachrichten')
+    image = StringProperty('deutschlandfunknachrichten.png')
 
     def __init__(self, **kwargs):
-        super(DFNews, self).__init__(**kwargs)
-        self.get_link()
+        super(DFNews, self).__init__(name=self.name, image=self.image, link="",**kwargs)
+
 
     def play_channel(self):
-        App.get_running_app().play(self.get_link())
+        self.link = self.get_link()
+        super(DFNews, self).play_channel()
+
 
     @staticmethod
     def get_link():
@@ -240,72 +244,31 @@ class TVButton(RadioButton):
     def play_channel(self):
         os.system("start ./videos/" + self.get_date() + self.name + ".mp4")
 
-
-
 class NewsGrid(ChannelGrid):
     download_links = None
 
     def __init__(self, **kwargs):
-        super(NewsGrid, self).__init__(**kwargs)
-        # DF Nachrichten
-        self.add_widget(DFNews(name='DF Nachrichten', image='deutschlandfunknachrichten.png', link=''))
-        # Economist
-        self.economist_search_links()
-
-    
-    def economist_search_links(self):
-        # https://www.podbean.com/podcast-detail/vpig6-23f2d/Forschung-Aktuell---Deutschlandfunk-Podcast
-        url = "https://www.podbean.com/podcast-detail/jdhgv-2ef60/Economist-Radio-Podcast"
-        UrlRequest(url, self.economist_found_links) # using kivys async requests
-    
-    def economist_found_links(self, request, html):
-        soup = BeautifulSoup(html, "html.parser")
-        download_buttons = soup.find_all("a", {"class": "download"}, href=True)
-        for button_link in download_buttons:
-             UrlRequest(button_link.get('href'), self.economist_found_streams) # using kivys async requests
-
-    def economist_found_streams(self, request, html):
-        soup = BeautifulSoup(html, "html.parser")
-        link = soup.find_all("a", {"class": "btn btn-ios download-btn"}, href=True)[0].get('href')
-        description = soup.find_all("p", {"class": "pod-name"})[0].get_text()
-        self.add_widget(RadioButton('economist',
-                                    self.economist_match_image(link), 
-                                    link,
-                                    description=description))
-        
-    @staticmethod
-    def economist_match_image(link):
-        if "theeconomistasks" in link:
-            return("Economist_asks.jpeg")
-        elif "theintelligence" in link:
-            return("Economist_The_Intelligence.jpeg")
-        elif "theeconomisteditorspicks" in link:
-            return("Economist_Editors_Picks.jpeg")
-        elif "theeconomistmoneytalks" in link:
-            return("Economist_Money_talks.jpeg")
-        elif "theeconomistbabbage" in link:
-            return("Economist_Babbage.jpeg")
-        else:
-            return("Economist_Radio.png")
+        super(NewsGrid, self).__init__(**kwargs)    
 
 class PodcastBttn(Button):
     streaming_links = ListProperty()
     descriptions = ListProperty()
+    timestamps = ListProperty()
     url = StringProperty()
     img = StringProperty()
     name = StringProperty()
 
     def __init__(self, **kwargs):
         super(PodcastBttn, self).__init__(**kwargs)
-        # self.url = "https://www.podbean.com/podcast-detail/54iea-2f1da/The-Intelligence-Podcast"
-        # self.name = "The-Intelligence-Podcast"
-        # self.img = 'deutschlandfunknachrichten.png'
-        self.podcast_search_links()
+        self.url = kwargs.get('url', '')
+        self.img = kwargs.get('img', '')
+        self.name = kwargs.get('name', '')
+        Clock.schedule_once(self.podcast_search_links)
 
-    def podcast_search_links(self):
-        UrlRequest(self.url, self.economist_found_links) # using kivys async requests
+    def podcast_search_links(self, *args):
+        UrlRequest(self.url, self.find_streams) # using kivys async requests
     
-    def economist_found_links(self, request, html):
+    def find_streams(self, request, html):
         soup = BeautifulSoup(html, "html.parser")
         download_buttons = soup.find_all("a", {"class": "download"}, href=True)
         for button_link in download_buttons:
@@ -314,14 +277,17 @@ class PodcastBttn(Button):
     def economist_found_streams(self, request, html):
         soup = BeautifulSoup(html, "html.parser")
 
-        link = soup.find_all("a", {"class": "btn btn-ios download-btn"}, href=True)[0].get('href')
+        link = soup.find("a", {"class": "btn btn-ios download-btn"}, href=True).get('href')
         self.streaming_links.append(link)
 
-        description = soup.find_all("p", {"class": "pod-name"})[0].get_text()
+        description = soup.find("p", {"class": "pod-name"}).get_text()
         self.descriptions.append(description)
 
+        timestamp = soup.find("div", {"class": "time"}).span.get_text()
+        self.timestamps.append(timestamp)
+
     def open_popup(self):
-        popup = PodcastPopup(self.streaming_links, self.descriptions, self.img, self.name)
+        popup = PodcastPopup(self.streaming_links, self.descriptions, self.timestamps, self.img, self.name)
         popup.open()
 
 class ScrollGridLayout(GridLayout):
@@ -329,7 +295,7 @@ class ScrollGridLayout(GridLayout):
 
 class PodcastPopup(Popup):
     
-    def __init__(self, streaming_links, descriptions, img, name, **kwargs):
+    def __init__(self, streaming_links, descriptions, timestamps, img, name, **kwargs):
         super(PodcastPopup, self).__init__(**kwargs)
 
         self.size_hint=(None, None)
@@ -337,8 +303,9 @@ class PodcastPopup(Popup):
         self.title = name
 
         grid = ScrollGridLayout(row_default_height=40, cols=1, spacing=[5, 5])
-        for (streaming_link, description) in zip(streaming_links, descriptions):
-            row = PodcastPopupRow(streaming_link, description, img, name)
+
+        for (streaming_link, description, timestamp) in sorted(zip(streaming_links, descriptions, timestamps), key=lambda x: x[2], reverse=True):
+            row = PodcastPopupRow(streaming_link, description, timestamp, img, name)
             grid.add_widget(row)
         
         scrollview = ScrollView(do_scroll_y=True)
@@ -350,12 +317,14 @@ class PodcastPopupRow(ButtonBehavior, GridLayout):
     image = StringProperty()
     description = StringProperty()
     name = StringProperty()
+    timestamp = StringProperty()
 
-    def __init__(self, link, description, image, name, **kwargs):
+    def __init__(self, link, description, timestamp, image, name, **kwargs):
         self.link = link
         self.description = description
         self.image = image
         self.name = name
+        self.timestamp = timestamp
         super(PodcastPopupRow, self).__init__(**kwargs)
     
     def play_channel(self):
@@ -377,14 +346,6 @@ class VideoGrid(ChannelGrid):
                                  width=(Window.width - 2 * 5) / 6,
                                  height=(Window.width - 2 * 5) / 6)) # spacing inside channel grid is 5
 
-
-class CloseMinimzeGrid(GridLayout, HoverBehavior):
-    def children_add(self):
-        self.add_widget(MinimizeButton(height=self.height))
-        self.add_widget(CloseButton(height=self.height))
-
-    def children_remove(self):
-        self.clear_widgets()
 
 
 class RadioApp(App):

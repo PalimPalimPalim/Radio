@@ -80,10 +80,31 @@ ScreenManager:
                         ScrollView:
                             height: self.parent.height + 0.01
                             NewsGrid:
+                                DFNews:
                                 PodcastBttn:
-                                    url: "https://www.podbean.com/podcast-detail/54iea-2f1da/The-Intelligence-Podcast"
+                                    name:"Economist Radio"
+                                    img:"Economist_Radio.png"
+                                    url:"https://www.podbean.com/podcast-detail/jdhgv-2ef60/Economist-Radio-Podcast"
+                                PodcastBttn:
                                     name: "The-Intelligence-Podcast"
-                                    img: "Economist_The_Intelligence.jpeg"
+                                    img:"Economist_The_Intelligence.jpeg"
+                                    url:"https://www.podbean.com/podcast-detail/54iea-2f1da/The-Intelligence-Podcast"
+                                PodcastBttn:
+                                    name: "Babbage"
+                                    img:"Economist_Babbage.jpeg"
+                                    url:"https://www.podbean.com/podcast-detail/c7eq6-35611/Babbage-from-Economist-Radio-Podcast"
+                                PodcastBttn:
+                                    name: "The Economist Asks"
+                                    img:"Economist_asks.jpeg"
+                                    url:"https://www.podbean.com/podcast-detail/7pnbt-403a3/The-Economist-Asks-Podcast"
+                                PodcastBttn:
+                                    name: "Editor's Picks from The Economist"
+                                    img:"Economist_Editors_Picks.jpeg"
+                                    url:"https://www.podbean.com/podcast-detail/83zby-2f1d2/Editor%27s-Picks-from-The-Economist-Podcast"
+                                PodcastBttn:
+                                    name: "Money Talks from Economist Radio"
+                                    img:"Economist_Money_talks.jpeg"
+                                    url:"https://www.podbean.com/podcast-detail/rnbqd-2f1c9/Money-Talks-from-Economist-Radio-Podcast"
                                     
 
                 TabbedPanelItem:
@@ -95,6 +116,8 @@ ScreenManager:
                             VideoGrid:
 
 <PodcastBttn>:
+    size_hint: (1, None)
+    height: self.width
     background_normal: './ButtonImages/' + self.img
     on_press: self.open_popup()
     on_press: self.background_normal = '' 
@@ -151,8 +174,18 @@ ScreenManager:
         size_hint: (None, None)
         width: root.height
         height: root.height
-    Label:
-        text: root.description
-        text_size: self.width, None
-        halign: 'left'
-        valign: 'middle'
+    BoxLayout:
+        orientation: "vertical"
+        padding: [5,5,5,5]
+        spacing: 1
+        Label:
+            text: root.timestamp
+            size_hint_y: 1/3
+        Label:
+            text: root.description
+            text_size: self.width, None
+            halign: 'left'
+            valign: 'middle'
+            
+
+
