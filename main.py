@@ -22,7 +22,8 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.widget import Widget
 from kivy.uix.behaviors.button import ButtonBehavior
-from kivy.properties import StringProperty, BooleanProperty, ObjectProperty, ListProperty
+from kivy.uix.modalview import ModalView
+from kivy.properties import StringProperty, BooleanProperty, ObjectProperty, ListProperty, NumericProperty
 from kivy.network.urlrequest import UrlRequest
 from kivy.clock import Clock
 from kivy.vector import Vector
@@ -110,7 +111,7 @@ class PlayPauseButton(ButtonBehavior, Widget, HoverBehavior):
 
     def __init__(self, **kwargs):
         super(PlayPauseButton, self).__init__(**kwargs)
-        Clock.schedule_once(self._add_play_sign, 2)
+        Clock.schedule_once(self._add_play_sign, 4)
         Clock.schedule_interval(self.check_status, 0.3)
 
     def collide_point(self, x, y):
@@ -254,6 +255,8 @@ class PodcastBttn(Button):
     streaming_links = ListProperty()
     descriptions = ListProperty()
     timestamps = ListProperty()
+    streams_num = NumericProperty()
+    streams_num_finished = NumericProperty()
     url = StringProperty()
     img = StringProperty()
     name = StringProperty()
@@ -263,14 +266,24 @@ class PodcastBttn(Button):
         self.url = kwargs.get('url', '')
         self.img = kwargs.get('img', '')
         self.name = kwargs.get('name', '')
-        Clock.schedule_once(self.podcast_search_links)
+
 
     def podcast_search_links(self, *args):
+
+        # start loading animation  
+        self.load = LoadingModal()
+        self.load.open()
+
+        for store in [self.streaming_links, self.descriptions, self.timestamps]:
+            store.clear()
+
         UrlRequest(self.url, self.find_streams) # using kivys async requests
     
     def find_streams(self, request, html):
         soup = BeautifulSoup(html, "html.parser")
         download_buttons = soup.find_all("a", {"class": "download"}, href=True)
+        self.streams_num = len(download_buttons)
+        self.streams_num_finished = 0
         for button_link in download_buttons:
              UrlRequest(button_link.get('href'), self.economist_found_streams) # using kivys async requests
 
@@ -286,9 +299,13 @@ class PodcastBttn(Button):
         timestamp = soup.find("div", {"class": "time"}).span.get_text()
         self.timestamps.append(timestamp)
 
-    def open_popup(self):
-        popup = PodcastPopup(self.streaming_links, self.descriptions, self.timestamps, self.img, self.name)
-        popup.open()
+        self.streams_num_finished +=1
+
+        if self.streams_num_finished == self.streams_num:
+            # dismiss loading animation
+            self.load.dismiss()
+            PodcastPopup(self.streaming_links, self.descriptions, self.timestamps, self.img, self.name).open()
+
 
 class ScrollGridLayout(GridLayout):
     pass
@@ -332,7 +349,36 @@ class PodcastPopupRow(ButtonBehavior, GridLayout):
         self.parent.parent.parent.parent.parent.dismiss()
         App.get_running_app().play(self.link, image=self.image, name=self.name, description=self.description)
 
+class LoadingWdgt(Label):
+    angle_1 = NumericProperty(0)
+    angle_2 = NumericProperty(20)
 
+    def __init__(self, **kwargs):
+        super(LoadingWdgt, self).__init__(**kwargs)
+        Clock.schedule_once(self.set_circle)
+        Clock.schedule_once(self.set_loading)
+
+    def set_circle(self, dt):
+        
+        self.angle_1 = self.angle_1 + dt*90
+        self.angle_2 = self.angle_2 + dt*180
+        
+        if self.angle_1 % 360 < self.angle_2 % 360:
+            self.angle_1 = self.angle_1 % 360
+            self.angle_2 = self.angle_2 % 360
+            self.angle_2 += 15 
+
+        Clock.schedule_once(self.set_circle, 1.0/20)
+    
+    def set_loading(self, dt):
+        self.text = self.text + "."
+        if self.text.count(".") == 4:
+            self.text = "Loading ."
+        Clock.schedule_once(self.set_loading, 0.3)
+
+
+class LoadingModal(ModalView):
+    pass
 
 class VideoGrid(ChannelGrid):
     def __init__(self, **kwargs):

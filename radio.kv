@@ -119,7 +119,8 @@ ScreenManager:
     size_hint: (1, None)
     height: self.width
     background_normal: './ButtonImages/' + self.img
-    on_press: self.open_popup()
+    #on_press: self.open_popup()
+    on_press: self.podcast_search_links()
     on_press: self.background_normal = '' 
     on_release:  self.background_normal = './ButtonImages/' + self.img
 
@@ -187,5 +188,20 @@ ScreenManager:
             halign: 'left'
             valign: 'middle'
             
-
+<LoadingModal>:
+    background: './ButtonImages/transparent.png'
+    size_hint: None, None
+    width: self.height
+    height: app.root.height* 0.5
+    LoadingWdgt:
+        auto_dismiss: False
+        text: "Loading "
+        canvas.after:
+            Color:
+                rgb: 1,1,1
+            Line:
+                circle:self.center_x, self.center_y, (self.width / 2) * 0.8, self.angle_1, self.angle_2
+                width: 2
+        size_hint_y: None
+        height: self.width
 
