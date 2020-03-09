@@ -332,9 +332,6 @@ class PodcastBttn2(PodcastBttn):
             self.descriptions.append(title)
             self.timestamps.append(timestamp)
 
-
-
-
         # dismiss loading animation
         self.load.dismiss()
         PodcastPopup(self.streaming_links, self.descriptions, self.timestamps, self.img, self.name).open()
@@ -470,10 +467,10 @@ class RadioApp(App):
         info = [media.get_meta(i) for i in range(30)]
 
 
-        self.station = info[0] if info[0] else ''
-        self.meta_info = info[12] if info[12] else ''
+        self.station = info[0] if info[0] else self.playing_name
+        self.meta_info = info[12] if info[12] else self.playing_description
 
-        if self.station.strip() == 'media.mp3':
+        if '.mp3' in self.station:
             self.station = self.playing_name
             self.meta_info = self.playing_description
 

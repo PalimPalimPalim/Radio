@@ -52,16 +52,14 @@ ScreenManager:
 
 
                 Label:
-                    text: app.station
+                    text: '[b]' + app.station + '[/b]\n' + app.meta_info
                     pos_hint: {"center_x": 0.5, "center_y": 0.25}
-                    width: self.parent.width
-                Label:
-                    text: app.meta_info
-                    pos_hint: {"center_x": 0.5, "center_y": 0.225}
                     size_hint_y: None
                     halign: "center"
                     text_size: self.width, None
                     height: self.texture_size[1]
+                    width: self.parent.width * 0.9
+                    markup: True
 
 
             # -------right side ------
