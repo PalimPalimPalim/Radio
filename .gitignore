@@ -4,3 +4,6 @@
 settings.json
 tasks.json
 test.py
+*test.py
+temp.py
+*test*

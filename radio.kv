@@ -23,8 +23,8 @@ ScreenManager:
                     on_leave: self._hover_remove_background()
                 Image:
                     id: playing_channel_img
-                    pos_hint: {"center_x": 0.5, "center_y": 0.9}
-                    size_hint: (1/4, None)
+                    pos_hint: {"center_x": 0.5, "center_y": 0.92}
+                    size_hint: (1/5, None)
                     height: self.width
                     source: "./ButtonImages/black.png"
                     canvas.before:
@@ -37,7 +37,7 @@ ScreenManager:
                 CoverImage:
                     id: cover_image
                     pos_hint: {"center_x": 0.5, "center_y": 0.55}
-                    size_hint: (0.75, None)
+                    size_hint: (0.65, None)
                     height: self.width
                     cover_info: app.meta_info
                     on_cover_info: self.update_cover()
@@ -105,6 +105,13 @@ ScreenManager:
                                     name: "Money Talks from Economist Radio"
                                     img:"Economist_Money_talks.jpeg"
                                     url:"https://www.podbean.com/podcast-detail/rnbqd-2f1c9/Money-Talks-from-Economist-Radio-Podcast"
+
+                                PodcastBttn2:
+                                    name: "Eine-stunde-film"
+                                    img:"eine-stunde-film.jpg"
+                                    url:"http://www.deutschlandfunknova.de/podcast/eine-stunde-film"
+
+
                                     
 
                 TabbedPanelItem:

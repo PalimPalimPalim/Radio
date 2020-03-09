@@ -262,7 +262,7 @@ class PodcastBttn(Button):
     name = StringProperty()
 
     def __init__(self, **kwargs):
-        super(PodcastBttn, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.url = kwargs.get('url', '')
         self.img = kwargs.get('img', '')
         self.name = kwargs.get('name', '')
@@ -307,6 +307,40 @@ class PodcastBttn(Button):
             PodcastPopup(self.streaming_links, self.descriptions, self.timestamps, self.img, self.name).open()
 
 
+class PodcastBttn2(PodcastBttn):
+
+    def podcast_search_links(self, *args):
+
+        # start loading animation  
+        self.load = LoadingModal()
+        self.load.open()
+
+        for store in [self.streaming_links, self.descriptions, self.timestamps]:
+            store.clear()
+
+        UrlRequest(self.url, self.find_streams) # using kivys async requests
+
+    def find_streams(self, request, html):
+        soup = BeautifulSoup(html, "html.parser")
+        
+        for item in soup.find_all('item'):
+            title = item.find('title').getText()
+            link = item.find('enclosure').get('url')
+            # description =f"({item.find('itunes:duration').getText()}) {item.find('description').getText()[3:-4]}"
+            timestamp = item.find('pubdate').getText()[5:16]
+            self.streaming_links.append(link)
+            self.descriptions.append(title)
+            self.timestamps.append(timestamp)
+
+
+
+
+        # dismiss loading animation
+        self.load.dismiss()
+        PodcastPopup(self.streaming_links, self.descriptions, self.timestamps, self.img, self.name).open()
+
+
+
 class ScrollGridLayout(GridLayout):
     pass
 
@@ -316,7 +350,7 @@ class PodcastPopup(Popup):
         super(PodcastPopup, self).__init__(**kwargs)
 
         self.size_hint=(None, None)
-        self.size=(Window.width * 0.5, Window.height * 0.4)
+        self.size=(Window.width * 0.5, Window.height * 0.9)
         self.title = name
 
         grid = ScrollGridLayout(row_default_height=40, cols=1, spacing=[5, 5])
