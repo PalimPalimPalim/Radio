@@ -6,6 +6,7 @@ import requests
 from bs4 import BeautifulSoup
 from functools import partial
 import coverpy
+import dateparser
 
 # kivy imports
 from kivy.config import Config
@@ -351,8 +352,8 @@ class PodcastPopup(Popup):
         self.title = name
 
         grid = ScrollGridLayout(row_default_height=40, cols=1, spacing=[5, 5])
-
-        for (streaming_link, description, timestamp) in sorted(zip(streaming_links, descriptions, timestamps), key=lambda x: x[2], reverse=True):
+        
+        for (streaming_link, description, timestamp) in sorted(zip(streaming_links, descriptions, timestamps), key=lambda x: dateparser.parse(x[2]), reverse=True):
             row = PodcastPopupRow(streaming_link, description, timestamp, img, name)
             grid.add_widget(row)
         
