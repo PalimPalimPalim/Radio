@@ -7,6 +7,8 @@ from bs4 import BeautifulSoup
 from functools import partial
 import coverpy
 import dateparser
+import time
+from misc.detectpi import is_raspberry_pi
 
 # kivy imports
 from kivy.config import Config
@@ -24,6 +26,7 @@ from kivy.uix.scrollview import ScrollView
 from kivy.uix.widget import Widget
 from kivy.uix.behaviors.button import ButtonBehavior
 from kivy.uix.modalview import ModalView
+from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.properties import StringProperty, BooleanProperty, ObjectProperty, ListProperty, NumericProperty
 from kivy.network.urlrequest import UrlRequest
 from kivy.clock import Clock
@@ -32,6 +35,9 @@ from kivy.graphics.vertex_instructions import Triangle, Rectangle, Ellipse
 from kivy.graphics.context_instructions import Color
 from kivy.graphics.instructions import Callback, InstructionGroup
 from kivy.core.window import Window
+from kivy.animation import Animation
+
+IS_RASPBERRY_PI = True #is_raspberry_pi()
 
 
 class HoverBehavior(object):
@@ -244,7 +250,8 @@ class TVButton(RadioButton):
             self.parent.remove_widget(self)
 
     def play_channel(self):
-        os.system("start ./videos/" + self.get_date() + self.name + ".mp4")
+        if not IS_RASPBERRY_PI:
+            os.system("start ./videos/" + self.get_date() + self.name + ".mp4")
 
 class NewsGrid(ChannelGrid):
     download_links = None
@@ -424,13 +431,87 @@ class VideoGrid(ChannelGrid):
                                  width=(Window.width - 2 * 5) / 6,
                                  height=(Window.width - 2 * 5) / 6)) # spacing inside channel grid is 5
 
+class ClockLabel(Label):
+
+    def __init__(self, **kwargs):
+        super(ClockLabel, self).__init__(**kwargs)
+        Clock.schedule_interval(self.update, 1)
+    
+    def update(self, *_):
+        self.text = time.asctime()
+
+class RootScreenManager(ScreenManager):
+    def __init__(self, **kwargs):
+        super(RootScreenManager, self).__init__(**kwargs)
+        self.add_widget(BaseScreen())
+
+        if IS_RASPBERRY_PI:
+            self.add_widget(ScreenSaver())
+
+
+class BaseScreen(Screen, ButtonBehavior):
+    touches = ListProperty([])
+    delay = NumericProperty(8)
+
+    def on_touch_down(self, touch):
+        touch.grab(self)
+        self.touches.append(touch)
+        Clock.unschedule(self.callback)
+        return super(BaseScreen, self).on_touch_down(touch)
+
+    def on_touch_up(self, touch):
+        if touch.grab_current is self:
+            touch.ungrab(self)
+            self.touches.remove(touch)
+            if not(self.touches):
+                Clock.schedule_once(self.callback, self.delay)
+            return True
+        else:
+            return super(BaseScreen, self).on_touch_up(touch)
+
+    def callback(self, *args):
+        print('called')
+        self.parent.current = 'screen_saver'
+
+    # screen_saver_delay = NumericProperty(5)
+
+    # def __init__(self, **kwargs):
+    #     super(BaseScreen, self).__init__(**kwargs)
+    #     Clock.schedule_once(self.activate_screen_saver, self.screen_saver_delay)
+    # #     self.bind(on_touch_down=self.reset_time_to_screen_saver)
+
+    # # def on_touch_down(self, touch):
+    # #     if self.collide_point(*touch.pos):
+    # #         return True
+    # #     return super(BaseScreen, self).on_touch_down(touch)
+
+    # def activate_screen_saver(self, *_):
+    #     self.parent.current = 'screen_saver'
+    
+    # # def reset_time_to_screen_saver(self, *_):
+    #     Clock.unschedule(self.activate_screen_saver)
+    #     Clock.schedule_once(self.activate_screen_saver, self.screen_saver_delay)
+
+
+class ScreenSaver(Screen, ButtonBehavior):
+    def __init__(self, **kwargs):
+        super(ScreenSaver, self).__init__(**kwargs)
+        self.bind(on_touch_down=self.deactivate_screen_saver)
+
+    def on_touch_down(self, touch):
+        if self.collide_point(*touch.pos):
+            return True
+        return super(ScreenSaver, self).on_touch_down(touch)
+
+    def deactivate_screen_saver(self, *_):
+        self.parent.current = 'base'
 
 
 class RadioApp(App):
     station = StringProperty()
     meta_info = StringProperty()
     playing_name = StringProperty()
-    playing_image = StringProperty()
+    playing_image = StringProperty('black.png')
     playing_description = StringProperty()
 
 
@@ -455,8 +536,8 @@ class RadioApp(App):
         self.playing_image = kwargs.get('image', '')
         self.playing_description = kwargs.get('description', '')
 
-        self.root.ids.playing_channel_img.source = './ButtonImages/' + self.playing_image
-        self.root.ids.cover_image.source = './ButtonImages/' + self.playing_image
+        # self.root.ids.playing_channel_img.source = './ButtonImages/' + self.playing_image
+        # self.root.ids.cover_image.source = './ButtonImages/' + self.playing_image
 
         
         self.vlc_player.play()

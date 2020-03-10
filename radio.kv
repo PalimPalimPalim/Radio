@@ -1,139 +1,139 @@
 
-ScreenManager:
-    Screen:
-        name: "base"
-        BoxLayout:
-            orientation: "horizontal"
-            # -------left side -------
-            FloatLayout:
-                PlayPauseButton:
-                    id: playpausebutton
-                    canvas.before:
-                        Color:
-                            rgba: [1, 1, 1, 1]
-                        Line:
-                            width: 1
-                            ellipse: (self.x, self.y, self.width, self.height)
-                    pos_hint: {"center_x": 0.5, "center_y": 0.1}
-                    size_hint: (None, None)
-                    width: 90
-                    height: 90
-                    on_press: self.toggle()
-                    on_enter: self._hover_add_background()
-                    on_leave: self._hover_remove_background()
-                Image:
-                    id: playing_channel_img
-                    pos_hint: {"center_x": 0.5, "center_y": 0.92}
-                    size_hint: (1/5, None)
-                    height: self.width
-                    source: "./ButtonImages/black.png"
-                    canvas.before:
-                        Color:
-                            rgba: [1, 1, 1, 1]
-                        Line:
-                            width: 1
-                            rectangle: self.x, self.y, self.width, self.height
-                
-                CoverImage:
-                    id: cover_image
-                    pos_hint: {"center_x": 0.5, "center_y": 0.55}
-                    size_hint: (0.65, None)
-                    height: self.width
-                    cover_info: app.meta_info
-                    on_cover_info: self.update_cover()
-                    source: "./ButtonImages/black.png"
-                    allow_stretch: True
-                    canvas.after:
-                        Color:
-                            rgba: [1, 1, 1, 1]
-                        Line:
-                            width: 1
-                            rectangle: self.x, self.y, self.width, self.height
+RootScreenManager:
+<BaseScreen>:
+    name: "base"
+    BoxLayout:
+        orientation: "horizontal"
+        # -------left side -------
+        FloatLayout:
+            PlayPauseButton:
+                id: playpausebutton
+                canvas.before:
+                    Color:
+                        rgba: [1, 1, 1, 1]
+                    Line:
+                        width: 1
+                        ellipse: (self.x, self.y, self.width, self.height)
+                pos_hint: {"center_x": 0.5, "center_y": 0.1}
+                size_hint: (None, None)
+                width: 90
+                height: 90
+                on_press: self.toggle()
+                on_enter: self._hover_add_background()
+                on_leave: self._hover_remove_background()
+            Image:
+                id: playing_channel_img
+                pos_hint: {"center_x": 0.5, "center_y": 0.92}
+                size_hint: (1/5, None)
+                height: self.width
+                source: "./ButtonImages/" + app.playing_image
+                canvas.before:
+                    Color:
+                        rgba: [1, 1, 1, 1]
+                    Line:
+                        width: 1
+                        rectangle: self.x, self.y, self.width, self.height
+            
+            CoverImage:
+                id: cover_image
+                pos_hint: {"center_x": 0.5, "center_y": 0.55}
+                size_hint: (0.65, None)
+                height: self.width
+                cover_info: app.meta_info
+                on_cover_info: self.update_cover()
+                source: "./ButtonImages/black.png"
+                allow_stretch: True
+                canvas.after:
+                    Color:
+                        rgba: [1, 1, 1, 1]
+                    Line:
+                        width: 1
+                        rectangle: self.x, self.y, self.width, self.height
 
 
-                Label:
-                    text: '[b]' + app.station + '[/b]\n' + app.meta_info
-                    pos_hint: {"center_x": 0.5, "center_y": 0.25}
-                    size_hint_y: None
-                    halign: "center"
-                    text_size: self.width, None
-                    height: self.texture_size[1]
-                    width: self.parent.width * 0.9
-                    markup: True
+            Label:
+                text: '[b]' + app.station + '[/b]\n' + app.meta_info
+                pos_hint: {"center_x": 0.5, "center_y": 0.25}
+                size_hint_y: None
+                halign: "center"
+                text_size: self.width, None
+                height: self.texture_size[1]
+                width: self.parent.width * 0.9
+                markup: True
 
 
-            # -------right side ------
-            TabbedPanel
-                do_default_tab: False
+        # -------right side ------
+        TabbedPanel
+            do_default_tab: False
 
-                TabbedPanelItem:   
-                    text: 'Radio'
+            TabbedPanelItem:   
+                text: 'Radio'
+                ScrollView:
+                    RadioGrid:
+
+            TabbedPanelItem:
+                text: "News"
+                ScrollView:
+                    do_scroll_y: True
                     ScrollView:
-                        RadioGrid:
+                        height: self.parent.height + 0.01
+                        NewsGrid:
+                            DFNews:
+                            PodcastBttn:
+                                name:"Economist Radio"
+                                img:"Economist_Radio.png"
+                                url:"https://www.podbean.com/podcast-detail/jdhgv-2ef60/Economist-Radio-Podcast"
+                            PodcastBttn:
+                                name: "The-Intelligence-Podcast"
+                                img:"Economist_The_Intelligence.jpeg"
+                                url:"https://www.podbean.com/podcast-detail/54iea-2f1da/The-Intelligence-Podcast"
+                            PodcastBttn:
+                                name: "Babbage"
+                                img:"Economist_Babbage.jpeg"
+                                url:"https://www.podbean.com/podcast-detail/c7eq6-35611/Babbage-from-Economist-Radio-Podcast"
+                            PodcastBttn:
+                                name: "The Economist Asks"
+                                img:"Economist_asks.jpeg"
+                                url:"https://www.podbean.com/podcast-detail/7pnbt-403a3/The-Economist-Asks-Podcast"
+                            PodcastBttn:
+                                name: "Editor's Picks from The Economist"
+                                img:"Economist_Editors_Picks.jpeg"
+                                url:"https://www.podbean.com/podcast-detail/83zby-2f1d2/Editor%27s-Picks-from-The-Economist-Podcast"
+                            PodcastBttn:
+                                name: "Money Talks from Economist Radio"
+                                img:"Economist_Money_talks.jpeg"
+                                url:"https://www.podbean.com/podcast-detail/rnbqd-2f1c9/Money-Talks-from-Economist-Radio-Podcast"
 
-                TabbedPanelItem:
-                    text: "News"
+                            PodcastBttn2:
+                                name: "Eine-Stunde-Film"
+                                img:"eine-stunde-film.jpg"
+                                url:"https://www.deutschlandfunknova.de/podcast/update"
+                            PodcastBttn2:
+                                name: "Wissensnachrichten"
+                                img:"Wissensnachrichten_DLFNova.jpg"
+                                url:"https://www.deutschlandfunknova.de/podcast/wissensnachrichten"
+                            PodcastBttn2:
+                                name: "Eine-Stunde-Liebe"
+                                img:"EineStunde_Liebe_DLFNova.jpg"
+                                url:"https://www.deutschlandfunknova.de/podcast/eine-stunde-liebe"
+                            PodcastBttn2:
+                                name: "Netzbasteln"
+                                img:"Netzbasteln_DLFNova.jpg"
+                                url:"https://www.deutschlandfunknova.de/podcast/netzbasteln"
+
+
+                                
+
+
+                                
+
+            TabbedPanelItem:
+                text: "Videos"
+                ScrollView:
+                    do_scroll_y: True
                     ScrollView:
-                        do_scroll_y: True
-                        ScrollView:
-                            height: self.parent.height + 0.01
-                            NewsGrid:
-                                DFNews:
-                                PodcastBttn:
-                                    name:"Economist Radio"
-                                    img:"Economist_Radio.png"
-                                    url:"https://www.podbean.com/podcast-detail/jdhgv-2ef60/Economist-Radio-Podcast"
-                                PodcastBttn:
-                                    name: "The-Intelligence-Podcast"
-                                    img:"Economist_The_Intelligence.jpeg"
-                                    url:"https://www.podbean.com/podcast-detail/54iea-2f1da/The-Intelligence-Podcast"
-                                PodcastBttn:
-                                    name: "Babbage"
-                                    img:"Economist_Babbage.jpeg"
-                                    url:"https://www.podbean.com/podcast-detail/c7eq6-35611/Babbage-from-Economist-Radio-Podcast"
-                                PodcastBttn:
-                                    name: "The Economist Asks"
-                                    img:"Economist_asks.jpeg"
-                                    url:"https://www.podbean.com/podcast-detail/7pnbt-403a3/The-Economist-Asks-Podcast"
-                                PodcastBttn:
-                                    name: "Editor's Picks from The Economist"
-                                    img:"Economist_Editors_Picks.jpeg"
-                                    url:"https://www.podbean.com/podcast-detail/83zby-2f1d2/Editor%27s-Picks-from-The-Economist-Podcast"
-                                PodcastBttn:
-                                    name: "Money Talks from Economist Radio"
-                                    img:"Economist_Money_talks.jpeg"
-                                    url:"https://www.podbean.com/podcast-detail/rnbqd-2f1c9/Money-Talks-from-Economist-Radio-Podcast"
-
-                                PodcastBttn2:
-                                    name: "Eine-Stunde-Film"
-                                    img:"eine-stunde-film.jpg"
-                                    url:"https://www.deutschlandfunknova.de/podcast/update"
-                                PodcastBttn2:
-                                    name: "Wissensnachrichten"
-                                    img:"Wissensnachrichten_DLFNova.jpg"
-                                    url:"https://www.deutschlandfunknova.de/podcast/wissensnachrichten"
-                                PodcastBttn2:
-                                    name: "Eine-Stunde-Liebe"
-                                    img:"EineStunde_Liebe_DLFNova.jpg"
-                                    url:"https://www.deutschlandfunknova.de/podcast/eine-stunde-liebe"
-                                PodcastBttn2:
-                                    name: "Netzbasteln"
-                                    img:"Netzbasteln_DLFNova.jpg"
-                                    url:"https://www.deutschlandfunknova.de/podcast/netzbasteln"
-
-
-                                    
-
-
-                                    
-
-                TabbedPanelItem:
-                    text: "Videos"
-                    ScrollView:
-                        do_scroll_y: True
-                        ScrollView:
-                            height: self.parent.height + 0.01
-                            VideoGrid:
+                        height: self.parent.height + 0.01
+                        VideoGrid:
 
 <PodcastBttn>:
     size_hint: (1, None)
@@ -224,4 +224,47 @@ ScreenManager:
                 width: 2
         size_hint_y: None
         height: self.width
+
+<ScreenSaver>:
+    name: 'screen_saver'
+    on_press: print('PalimPalim')
+    RelativeLayout:
+        ClockLabel:
+            pos_hint: {'center_x': 0.75, 'center_y': 2/3}
+        Label:
+            text: '[b]' + app.station + '[/b]\n' + app.meta_info
+            pos_hint: {"center_x": 0.75, "center_y": 1/3}
+            size_hint_y: None
+            halign: "center"
+            text_size: self.width, None
+            height: self.texture_size[1]
+            width: self.parent.width * 0.9
+            markup: True
+        CoverImage:
+            id: cover_image
+            pos_hint: {"center_x": 0.25, "center_y": 0.5}
+            size_hint: (None, 0.6)
+            width: self.height
+            cover_info: app.meta_info
+            on_cover_info: self.update_cover()
+            source: "./ButtonImages/black.png"
+            allow_stretch: True
+            canvas.after:
+                Color:
+                    rgba: [1, 1, 1, 1]
+                Line:
+                    width: 1
+                    rectangle: self.x, self.y, self.width, self.height
+        Image:
+            id: playing_channel_img
+            pos_hint: {"center_x": 0.75, "center_y": 0.5}
+            size_hint: (None, 1/5)
+            width: self.height
+            source: "./ButtonImages/" + app.playing_image
+            canvas.before:
+                Color:
+                    rgba: [1, 1, 1, 1]
+                Line:
+                    width: 1
+                    rectangle: self.x, self.y, self.width, self.height
 
