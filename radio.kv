@@ -37,7 +37,7 @@ RootScreenManager:
             CoverImage:
                 id: cover_image
                 pos_hint: {"center_x": 0.5, "center_y": 0.55}
-                size_hint: (0.65, None)
+                size_hint: (0.55, None)
                 height: self.width
                 cover_info: app.meta_info
                 on_cover_info: self.update_cover()
@@ -129,11 +129,37 @@ RootScreenManager:
 
             TabbedPanelItem:
                 text: "Videos"
-                ScrollView:
-                    do_scroll_y: True
-                    ScrollView:
+                GridLayout:
+                    cols: 1
+                    GridLayout:
+                        size_hint_y: None
+                        height: self.width / 3 if video_grid.is_refreshing else 0
+                        cols: 3
+                        Widget:
+                        Label: 
+                            progress: video_grid.perc_finished
+                            text: str(int(round(self.progress, 2) * 100)) + '%' if video_grid.is_refreshing else ''
+                            canvas.after:
+                                Color:
+                                    rgba: 1,1,1, 0 if self.text == '' else 1
+                                Line:
+                                    circle: self.center_x, self.center_y, (self.width / 2) * 0.8, 0, float(self.progress) * 360 if self.progress else 0 
+                                    width: 2 
+                        Widget:
+                    RefreshScrollView:
+                        do_scroll_y: True
+                        on_refresh: video_grid.refresh()
                         height: self.parent.height + 0.01
                         VideoGrid:
+                            id: video_grid
+
+<RefreshScrollView>:
+    on_scroll_move: self.check_refresh()
+    on_refresh: print('refresh')
+
+<VideoGridSpacer>:
+    size_hint: (1, None)
+    height: self.width
 
 <PodcastBttn>:
     size_hint: (1, None)
@@ -164,7 +190,7 @@ RootScreenManager:
 <TabbedPanelHeader>
     canvas.after:
         Color:
-            rgba: 1,1, 1, 1
+            rgba: 1, 1, 1, 1
         Line:
             points: [self.pos[0] + 2, self.pos[1],self.pos[0] + 2, self.pos[1]+ self.height - 2,self.pos[0] + self.width - 2, self.pos[1]+ self.height - 2, self.pos[0] + self.width - 2, self.pos[1]]
             width: 1
@@ -238,7 +264,7 @@ RootScreenManager:
             halign: "center"
             text_size: self.width, None
             height: self.texture_size[1]
-            width: self.parent.width * 0.9
+            width: self.parent.width * 0.45
             markup: True
         CoverImage:
             id: cover_image
@@ -268,3 +294,61 @@ RootScreenManager:
                     width: 1
                     rectangle: self.x, self.y, self.width, self.height
 
+<VideoPlayerScreen>:
+    id: 'scrn_video'
+    slider: slider
+    name: "video"
+    video_path: app.playing_video
+    on_enter: self.play()
+    FloatLayout:
+        BoxLayout:
+            orientation: 'vertical'
+            BoxLayout:
+                orientation: 'horizontal'
+                size_hint_y: None
+                height: close_bttn.height
+                Button:
+                    on_press: root.change_size()
+                    size_hint_x: 92
+                    background_color: (0,0,0,1)
+                Button:
+                    id: close_bttn
+                    size_hint_x: 8
+                    size_hint_y: None
+                    height: self.width
+                    background_color: (0,0,0,1)
+                    on_press: root.player_stop()
+                    on_press:app.root.current = 'base'
+                    text: 'X'
+                    font_size: 0.9 * self.height
+            Button:
+                on_press: root.change_size()
+                background_color: (0,0,0,1)
+            BoxLayout:
+                orientation: 'horizontal'
+                size_hint_y: None
+                height: play_pause_bttn.height
+                Button:
+                    id: play_pause_bttn
+                    on_press: root.play_pause()
+                    size_hint_x: 8
+                    size_hint_y: None
+                    height: self.width
+                    Image:
+                        id: play_pause_image
+                        center_x: self.parent.center_x
+                        center_y: self.parent.center_y
+                Slider:
+                    id: slider
+                    size_hint_x: 92
+                    on_value: root.set_videopos(self.value_normalized)
+
+
+        # BoxLayout:
+        #     orientation: 'vertical'
+        #     size_hint_y: 60
+
+        #     BoxLayout:
+        #         Button:
+        #             text: 'Play/Pause'
+        #             on_press: root.playpause()

@@ -3,13 +3,13 @@ print("starting script download_tagesthemen.py")
 import requests
 from bs4 import BeautifulSoup
 
-def get_download_link():
+def get_tagesthemen_download_link_date():
     # link = "https://www.tagesschau.de/sendung/tagesschau/index.html"
     link = "https://www.tagesschau.de/sendung/tagesthemen/index.html"
     
     r = requests.get(link)
     soup = BeautifulSoup(r.text, "html.parser")
-    button = soup.find_all('div', {'class': "button"})[3]
+    button = soup.find_all('div', {'class': "button"})[0]
     button_text = str(button)
     begin_link = button_text.find("//download.media.tagesschau.de/video")
     end_link = button_text.find(".mp4") + len(".mp4")
@@ -29,6 +29,6 @@ def download_mp4(link, date):
         f.write(r.content)    
 
 if __name__ =="__main__":
-    info = get_download_link()
+    info = get_tagesthemen_download_link_date()
 
     download_mp4(**info)

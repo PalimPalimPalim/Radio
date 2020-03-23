@@ -9,6 +9,9 @@ import coverpy
 import dateparser
 import time
 from misc.detectpi import is_raspberry_pi
+from misc.osType import get_platform
+from misc.download_tagesthemen import get_tagesthemen_download_link_date
+from pathlib import Path
 
 # kivy imports
 from kivy.config import Config
@@ -37,8 +40,8 @@ from kivy.graphics.instructions import Callback, InstructionGroup
 from kivy.core.window import Window
 from kivy.animation import Animation
 
-IS_RASPBERRY_PI = True #is_raspberry_pi()
-
+IS_RASPBERRY_PI = is_raspberry_pi()
+IS_WINDOWS = get_platform() == 'Windows'
 
 class HoverBehavior(object):
     """Hover behavior.
@@ -123,10 +126,15 @@ class PlayPauseButton(ButtonBehavior, Widget, HoverBehavior):
 
     def collide_point(self, x, y):
         return Vector(x, y).distance(self.center) < self.width / 2
+    
+    def get_status(self):
+        status = App.get_running_app().vlc_player.get_state()
+        return status
+
 
     def check_status(self, *largs):
         # retrieve if playing
-        status = App.get_running_app().vlc_player.get_state()
+        status = self.get_status()
 
         # change play/pause sign if is not like status
         if str(status) in ['State.Opening', 'State.Buffering','State.Playing']:
@@ -175,6 +183,10 @@ class PlayPauseButton(ButtonBehavior, Widget, HoverBehavior):
 
     def _hover_remove_background(self):
         self.canvas.before.remove(self.background)
+
+class PlayPauseButtonVideo(PlayPauseButton):
+    def get_status(self):
+        return 'State.Playing'
 
 
 class ChannelGrid(GridLayout):
@@ -250,7 +262,15 @@ class TVButton(RadioButton):
             self.parent.remove_widget(self)
 
     def play_channel(self):
-        if not IS_RASPBERRY_PI:
+        print(get_platform(), 'palim')
+
+        App.get_running_app().vlc_player.stop()
+
+        if IS_RASPBERRY_PI:
+            App.get_running_app().root.current = 'video'
+            App.get_running_app().playing_video = self.get_date() + self.name + ".mp4"
+        elif IS_WINDOWS:
+            print('palim')
             os.system("start ./videos/" + self.get_date() + self.name + ".mp4")
 
 class NewsGrid(ChannelGrid):
@@ -420,16 +440,64 @@ class LoadingModal(ModalView):
     pass
 
 class VideoGrid(ChannelGrid):
+    perc_finished = NumericProperty(0)
+    is_refreshing = BooleanProperty(False)
+
     def __init__(self, **kwargs):
         super(VideoGrid, self).__init__(**kwargs)
         Clock.schedule_once(self.add_tagesthemen, 2)
 
-    def add_tagesthemen(self, *args):
+    def refresh(self):
+        self.refresh_tagesthemen()
+
+    def refresh_tagesthemen(self):
+        self.is_refreshing = True
+        Clock.tick()
+        info = get_tagesthemen_download_link_date()
+        UrlRequest( url=info['link'], 
+                    on_success=self.after_download,
+                    on_progress=self.on_download_progress,
+                    file_path='./videos/' + info['date'] + 'tagesthemen.mp4')
+
+    def after_download(self, request, result):
+        print(f'request={request}, result={result}')
+        print('download finished')
+        self.is_refreshing = False
+        self.clear_widgets()
+        self.add_tagesthemen()
+
+    def on_download_progress(self, request, current_size, total_size):
+        # print(f'request={request}, current_size={current_size}, total_size={total_size}')
+        self.perc_finished = current_size / total_size
+
+    def add_tagesthemen(self, *_):
         self.add_widget(TVButton(name="tagesthemen", 
                                  image="tagesthemen.png",
                                  size_hint=(None, None),
                                  width=(Window.width - 2 * 5) / 6,
                                  height=(Window.width - 2 * 5) / 6)) # spacing inside channel grid is 5
+
+        for _ in range(15):
+            self.add_widget(VideoGridSpacer())
+
+class VideoGridSpacer(Widget):
+    pass
+
+class RefreshScrollView(ScrollView):
+    is_refreshing = BooleanProperty(False)
+
+    def __init__(self, **kwargs):
+        self.register_event_type('on_refresh')
+        super().__init__(**kwargs)
+    
+    def check_refresh(self):
+        if not self.is_refreshing and self.scroll_y > 1.05:
+            Clock.schedule_once(lambda x: self.dispatch('on_refresh'), 2)
+            self.is_refreshing = True
+            Clock.schedule_once(lambda x: setattr(self, 'is_refreshing', False), 10)
+
+    def on_refresh(self):
+        pass
 
 class ClockLabel(Label):
 
@@ -444,14 +512,14 @@ class RootScreenManager(ScreenManager):
     def __init__(self, **kwargs):
         super(RootScreenManager, self).__init__(**kwargs)
         self.add_widget(BaseScreen())
-
+        self.add_widget(ScreenSaver())
         if IS_RASPBERRY_PI:
-            self.add_widget(ScreenSaver())
+            self.add_widget(VideoPlayerScreen())
 
 
 class BaseScreen(Screen, ButtonBehavior):
     touches = ListProperty([])
-    delay = NumericProperty(8)
+    delay = NumericProperty(15)
 
     def on_touch_down(self, touch):
         touch.grab(self)
@@ -470,28 +538,8 @@ class BaseScreen(Screen, ButtonBehavior):
             return super(BaseScreen, self).on_touch_up(touch)
 
     def callback(self, *args):
-        print('called')
-        self.parent.current = 'screen_saver'
-
-    # screen_saver_delay = NumericProperty(5)
-
-    # def __init__(self, **kwargs):
-    #     super(BaseScreen, self).__init__(**kwargs)
-    #     Clock.schedule_once(self.activate_screen_saver, self.screen_saver_delay)
-    # #     self.bind(on_touch_down=self.reset_time_to_screen_saver)
-
-    # # def on_touch_down(self, touch):
-    # #     if self.collide_point(*touch.pos):
-    # #         return True
-    # #     return super(BaseScreen, self).on_touch_down(touch)
-
-    # def activate_screen_saver(self, *_):
-    #     self.parent.current = 'screen_saver'
-    
-    # # def reset_time_to_screen_saver(self, *_):
-    #     Clock.unschedule(self.activate_screen_saver)
-    #     Clock.schedule_once(self.activate_screen_saver, self.screen_saver_delay)
-
+        if App.get_running_app().root.current == self.name: # ToDo, make this better, this should not be called if it is not on BaseScreen
+            self.parent.current = 'screen_saver'
 
 class ScreenSaver(Screen, ButtonBehavior):
     def __init__(self, **kwargs):
@@ -506,6 +554,73 @@ class ScreenSaver(Screen, ButtonBehavior):
     def deactivate_screen_saver(self, *_):
         self.parent.current = 'base'
 
+class VideoPlayerScreen(Screen):
+    slider = ObjectProperty()
+    minimized = BooleanProperty(True)
+    video_path = StringProperty() # 20200308tagesthemen.mp4
+
+    def is_playing(self):
+        if hasattr(self, 'player'):
+            return self.player.is_playing()
+        else:
+            return False
+    
+    def set_play_pause_bttn(self, *args):
+        print(self.ids)
+        if self.is_playing():
+            self.ids.play_pause_image.source = 'atlas://data/images/defaulttheme/media-playback-pause'   
+        else:
+            self.ids.play_pause_image.source = 'atlas://data/images/defaulttheme/media-playback-start'
+
+
+    def play(self):
+        from omxplayer.player import OMXPlayer
+        VIDEO_PATH = Path("videos/" + self.video_path)
+        print(VIDEO_PATH)
+        self.player = OMXPlayer(VIDEO_PATH, args=['-o', 'alsa',  '--layer',  '100000'])
+        self.player.set_video_pos(0,0,800,480)
+        self.set_slider()
+        self.change_size()
+        Clock.schedule_interval(self.set_slider, 3)
+        Clock.schedule_interval(self.set_play_pause_bttn, 1)
+
+    def player_stop(self):
+        Clock.unschedule(self.set_play_pause_bttn)
+        Clock.unschedule(self.set_slider)
+        self.player.stop()
+
+
+    def play_pause(self):
+        self.player.play_pause()
+
+    def quit(self, gg, **kwargs):
+        self.player.quit()
+        App.get_running_app().stop()
+
+    def set_slider(self, *args):
+        pos = self.player.position() # in seconds as int
+        duration =  self.player.duration() # in seconds as float
+        self.slider.value_normalized = pos / duration
+
+    def set_videopos(self, *args):
+        pos = self.player.position() # in seconds as int
+        duration =  self.player.duration() # in seconds as float
+        if abs (pos/duration - self.slider.value_normalized) > 0.05:
+            self.player.set_position(self.slider.value_normalized*duration)
+
+
+    def change_size(self):
+        print(self.minimized)
+        if self.minimized:
+            self.player.set_alpha(255)
+        else:
+            self.player.set_alpha(100)
+        self.minimized = not self.minimized
+        print(self.minimized)
+
+
+class PlayPauseButtonVideo(PlayPauseButton):
+    pass
 
 class RadioApp(App):
     station = StringProperty()
@@ -513,18 +628,22 @@ class RadioApp(App):
     playing_name = StringProperty()
     playing_image = StringProperty('black.png')
     playing_description = StringProperty()
+    playing_video = StringProperty()
 
 
     def __init__(self, **kwargs):
         super(RadioApp, self).__init__(**kwargs)
         # start vlc for mp3 streaming
-        self.vlc_inst = vlc.Instance()
+        self.vlc_inst = vlc.Instance('--fullscreen')
         self.vlc_player = self.vlc_inst.media_player_new()
         
     def play(self, link='', **kwargs):
-        
+        # Window.clearcolor = (0,0,0,0)
+        # link = 'videos/20200308tagesthemen.mp4'
         print(link)
         print(kwargs)
+
+        
         
         if link:
             # play
@@ -538,10 +657,10 @@ class RadioApp(App):
 
         # self.root.ids.playing_channel_img.source = './ButtonImages/' + self.playing_image
         # self.root.ids.cover_image.source = './ButtonImages/' + self.playing_image
-
         
         self.vlc_player.play()
-        
+
+
         Clock.schedule_interval(self.get_stream_info, 1)
 
     def get_stream_info(self, media, *largs):
@@ -566,4 +685,9 @@ class RadioApp(App):
         Window.borderless = False
 
 if __name__ == "__main__":
-    RadioApp().run()
+    radio = RadioApp()
+    try:
+        radio.run()
+    except KeyboardInterrupt:
+        radio.stop()
+        # os.system('killall dbus-daemon')

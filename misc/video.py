@@ -32,7 +32,7 @@ class VideoPlayerScreen(Screen):
         Window.clearcolor = (0,0,0,1)
 
     def play(self):
-        VIDEO_PATH = Path("../videos/20200223tagesthemen.mp4")
+        VIDEO_PATH = Path("../videos/20200308tagesthemen.mp4")
 
         self.player = OMXPlayer(VIDEO_PATH, args=['-o', 'alsa',  '--layer',  '10000'])
         #self.player = OMXPlayer('/home/pi/Documents/Radio/videos/20200223tagesthemen.mp4')
