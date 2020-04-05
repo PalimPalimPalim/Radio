@@ -43,6 +43,9 @@ from kivy.animation import Animation
 IS_RASPBERRY_PI = is_raspberry_pi()
 IS_WINDOWS = get_platform() == 'Windows'
 
+if IS_RASPBERRY_PI:
+    from omxplayer.player import OMXPlayer, OMXPlayerDeadError
+
 class HoverBehavior(object):
     """Hover behavior.
     :Events:
@@ -270,7 +273,6 @@ class TVButton(RadioButton):
             App.get_running_app().root.current = 'video'
             App.get_running_app().playing_video = self.get_date() + self.name + ".mp4"
         elif IS_WINDOWS:
-            print('palim')
             os.system("start ./videos/" + self.get_date() + self.name + ".mp4")
 
 class NewsGrid(ChannelGrid):
@@ -561,7 +563,11 @@ class VideoPlayerScreen(Screen):
 
     def is_playing(self):
         if hasattr(self, 'player'):
-            return self.player.is_playing()
+            try:
+                return self.player.is_playing()
+            except OMXPlayerDeadError:
+                self.leave_player()
+                return False
         else:
             return False
     
@@ -574,7 +580,6 @@ class VideoPlayerScreen(Screen):
 
 
     def play(self):
-        from omxplayer.player import OMXPlayer
         VIDEO_PATH = Path("videos/" + self.video_path)
         print(VIDEO_PATH)
         self.player = OMXPlayer(VIDEO_PATH, args=['-o', 'alsa',  '--layer',  '100000'])
@@ -587,8 +592,12 @@ class VideoPlayerScreen(Screen):
     def player_stop(self):
         Clock.unschedule(self.set_play_pause_bttn)
         Clock.unschedule(self.set_slider)
-        self.player.stop()
-
+        if self.is_playing():
+            self.player.stop()
+    
+    @staticmethod
+    def leave_player():
+        App.get_running_app().root.current = 'base'
 
     def play_pause(self):
         self.player.play_pause()
@@ -598,9 +607,13 @@ class VideoPlayerScreen(Screen):
         App.get_running_app().stop()
 
     def set_slider(self, *args):
-        pos = self.player.position() # in seconds as int
-        duration =  self.player.duration() # in seconds as float
-        self.slider.value_normalized = pos / duration
+        try: 
+            pos = self.player.position() # in seconds as int
+            duration =  self.player.duration() # in seconds as float
+            self.slider.value_normalized = pos / duration
+        except OMXPlayerDeadError:
+            self.leave_player()
+        
 
     def set_videopos(self, *args):
         pos = self.player.position() # in seconds as int
@@ -610,14 +623,12 @@ class VideoPlayerScreen(Screen):
 
 
     def change_size(self):
-        print(self.minimized)
+
         if self.minimized:
             self.player.set_alpha(255)
         else:
             self.player.set_alpha(100)
         self.minimized = not self.minimized
-        print(self.minimized)
-
 
 class PlayPauseButtonVideo(PlayPauseButton):
     pass
