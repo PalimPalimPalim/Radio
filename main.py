@@ -42,6 +42,7 @@ from kivy.animation import Animation
 
 IS_RASPBERRY_PI = is_raspberry_pi()
 IS_WINDOWS = get_platform() == 'Windows'
+IS_MAC = get_platform() == 'OS X'
 
 if IS_RASPBERRY_PI:
     from omxplayer.player import OMXPlayer, OMXPlayerDeadError
@@ -274,6 +275,8 @@ class TVButton(RadioButton):
             App.get_running_app().playing_video = self.get_date() + self.name + ".mp4"
         elif IS_WINDOWS:
             os.system("start ./videos/" + self.get_date() + self.name + ".mp4")
+        elif IS_MAC:
+            os.system("open ./videos/" + self.get_date() + self.name + ".mp4")
 
 class NewsGrid(ChannelGrid):
     download_links = None
